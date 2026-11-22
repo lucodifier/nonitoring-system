@@ -128,7 +128,7 @@ Tem lista padrão de ~16 serviços (sobrescreva com `SERVICES`). É a geração 
 | Prometheus | opcional | só se usar `prometheus_job` |
 | Webhook Discord ou Google Chat | recomendado | destino dos alertas |
 | Hypervisor (Proxmox/libvirt/VMware) | opcional | só para a parte de VMs |
-| Docker + registry (GHCR) | produção | imagens `ghcr.io/agroplay-music-ltda/<projeto>:latest` |
+| Docker + registry (GHCR) | produção | imagens `${IMAGE_REGISTRY:-ghcr.io/your-org}/<projeto>:${IMAGE_TAG:-latest}` (configurável) |
 
 ### 3.2 Ordem recomendada
 
@@ -136,14 +136,14 @@ Tem lista padrão de ~16 serviços (sobrescreva com `SERVICES`). É a geração 
 1. Crie o banco `monitoring_system` e o schema: `CREATE SCHEMA monitoring;`
 2. Aplique o **schema base** (tabelas `users`, `services`, `service_*`, `deployment_checklist*`).
    > ⚠️ **O dump base (`dump-20251215.sql`) NÃO está nos repositórios.** O schema original era mantido por dump/SQL manual;
-   > só duas coisas estão versionadas: a migration `CreateServiceAlerts` (engine) e a de VMs (worker). Ao migrar para
-   > portfólio, gere um dump do schema atual (`pg_dump -s -n monitoring`) e versione-o, ou reconstrua a partir das entities TypeORM.
+   > só duas coisas estão versionadas: a migration `CreateServiceAlerts` (engine) e a de VMs (worker). Para subir em um
+   > ambiente novo, gere um dump do schema atual (`pg_dump -s -n monitoring`) e versione-o, ou reconstrua a partir das entities TypeORM.
 3. Aplique as migrations/SQL:
    - Engine: `pnpm migration:run` (cria `service_alerts`, idempotente).
    - Worker (VMs): `psql ... -f docs/sql/vm-monitoring.sql` **ou** `npm run migration:run`
      (em produção: `docker exec monitoring-system-worker npm run migration:run:prod`). Rollback em `docs/sql/vm-monitoring-rollback.sql`.
    - **O deploy não roda migrations automaticamente.**
-4. Crie o usuário admin: `pnpm ts-node scripts/create-admin-user.ts` (engine) **imprime** um `INSERT` para `monitoring.users` com senha `admin123` — execute-o no banco e **troque a senha**. (Atenção: o script gera `INSERT INTO users`; confirme o schema `monitoring.` no seu banco.)
+4. Crie o usuário admin: `pnpm ts-node scripts/create-admin-user.ts` (engine) **imprime** um `INSERT` para `monitoring.users` com a senha definida em `ADMIN_PASSWORD` (`ADMIN_PASSWORD=... pnpm ts-node scripts/create-admin-user.ts`) — execute-o no banco. (Atenção: o script gera `INSERT INTO users`; confirme o schema `monitoring.` no seu banco.)
 5. Cadastre os serviços a monitorar:
    ```sql
    INSERT INTO monitoring.services (id, name, type, container_id, prometheus_job, loki_label, is_active)
@@ -195,12 +195,12 @@ build → push para GHCR → (runner self-hosted `prod`) baixa os segredos do **
 
 | Projeto | Diretório no servidor | Caminho no Infisical | Mapeamento de porta |
 |---|---|---|---|
-| worker | `~/Docker/monitoring-system-worker` | `/monitoring-system-worker` | `5080:5080` |
-| engine | `~/Docker/monitoring-system-engine` | `/monitoring-system-engine` | `5070:3003` |
-| dashboard | `~/Docker/monitoring-system-dashboard` | `/monitoring-system-dashboard` | `5068:3000` |
-| monitoring-system | `~/Docker/monitoring-system` | `/monitoring-system` | — |
+| worker | `<DEPLOY_BASE_DIR>/monitoring-system-worker` | `/monitoring-system-worker` | `5080:5080` |
+| engine | `<DEPLOY_BASE_DIR>/monitoring-system-engine` | `/monitoring-system-engine` | `5070:3003` |
+| dashboard | `<DEPLOY_BASE_DIR>/monitoring-system-dashboard` | `/monitoring-system-dashboard` | `5068:3000` |
+| monitoring-system | `<DEPLOY_BASE_DIR>/monitoring-system` | `/monitoring-system` | — |
 
-Segredos necessários no GitHub: `INFISICAL_TOKEN`, `INFISICAL_PROJECT_ID`. Em produção o `.env` é a única fonte de configuração; os `.env.sample` documentam as chaves.
+Configuração por ambiente (nada fixo no código): secrets `INFISICAL_TOKEN` e `INFISICAL_PROJECT_ID`; variáveis do repositório `INFISICAL_DOMAIN` (URL da API do Infisical) e `DEPLOY_BASE_DIR` (pasta base no servidor, padrão `/opt/docker`); no compose, `IMAGE_REGISTRY` e `IMAGE_TAG`. Alertador de logs: `SERVICES` (lista) e `SYSTEM_NAME`. Em produção o `.env` é a única fonte de configuração; os `.env.sample` documentam as chaves.
 
 > **Armadilha de porta do engine:** o compose mapeia `5070:3003`, então o container precisa de `PORT=3003`
 > (o default do código é 5070 e o Dockerfile faz `EXPOSE 5070`). Sem esse ajuste, a porta publicada não responde.

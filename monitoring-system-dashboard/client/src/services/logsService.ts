@@ -56,7 +56,7 @@ export const serviceErrorsService = {
  * de montar um link quebrado.
  */
 export const dozzleUrlFor = (containerRuntimeId?: string) => {
-  const base = import.meta.env.VITE_DOZZLE_URL || 'http://10.10.10.223:8082';
+  const base = import.meta.env.VITE_DOZZLE_URL || 'http://localhost:8082';
   return containerRuntimeId ? `${base}/container/${containerRuntimeId}` : base;
 };
 

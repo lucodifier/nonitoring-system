@@ -1,7 +1,11 @@
 import * as bcrypt from 'bcryptjs';
 
 async function generateAdminUser() {
-  const password = 'admin123';
+  const password = process.env.ADMIN_PASSWORD;
+  if (!password) {
+    console.error('Defina ADMIN_PASSWORD no ambiente. Ex.: ADMIN_PASSWORD="uma-senha-forte" pnpm ts-node scripts/create-admin-user.ts');
+    process.exit(1);
+  }
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -23,7 +27,7 @@ ON CONFLICT (username) DO UPDATE SET
 
   console.log('\n=== Credenciais ===');
   console.log('Username: admin');
-  console.log('Password: admin123');
+  console.log('Password: (valor de ADMIN_PASSWORD)');
   console.log('\nNOTA: Altere a senha após o primeiro login!');
 }
 

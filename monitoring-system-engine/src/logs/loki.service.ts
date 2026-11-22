@@ -13,7 +13,7 @@ export interface LogEntry {
 export class LokiService {
   private readonly logger = new Logger(LokiService.name);
   private readonly lokiUrl =
-    process.env.LOKI_URL || process.env.LOKI_BASE_URL || 'http://10.10.10.224:3100';
+    process.env.LOKI_URL || process.env.LOKI_BASE_URL || 'http://localhost:3100';
   /**
    * Label de ambiente usada nas consultas ao Loki.
    * Mapeia NODE_ENV / APP_ENV para os valores esperados em Loki: dev, stg, prod.

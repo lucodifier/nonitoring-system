@@ -56,21 +56,21 @@ jobs:
 
       - name: 🔑 Baixar secrets do Infisical
         run: |
-          cd /home/desenvol_prod/Docker/monitoring-system-dashboard
+          cd ${{ vars.DEPLOY_BASE_DIR || '/opt/docker' }}/monitoring-system-dashboard
 
           echo "🔑 Baixando secrets do Infisical..."
           infisical export \
           --token ${{ secrets.INFISICAL_TOKEN }} \
           --env=prod \
-          --projectId=21038c74-0248-4006-b23e-f94508aaef6a \
+          --projectId="${{ secrets.INFISICAL_PROJECT_ID }}" \
           --path="/monitoring-system-dashboard" \
           --format=dotenv \
-          --domain=http://10.10.10.223:6007/api \
+          --domain="${{ vars.INFISICAL_DOMAIN }}" \
           > .env
 
       - name: 🛥️ Deploy Docker container
         run: |
-          cd /home/desenvol_prod/Docker/monitoring-system-dashboard
+          cd ${{ vars.DEPLOY_BASE_DIR || '/opt/docker' }}/monitoring-system-dashboard
 
           echo "🛑 Parando container atual (se existir)..."
           docker compose down || true
@@ -86,6 +86,6 @@ jobs:
 
       - name: 🧹 Limpar .env após deploy
         run: |
-          rm -f /home/desenvol_prod/Docker/monitoring-system-dashboard/.env
+          rm -f ${{ vars.DEPLOY_BASE_DIR || '/opt/docker' }}/monitoring-system-dashboard/.env
           echo ".env apagado com sucesso"
 

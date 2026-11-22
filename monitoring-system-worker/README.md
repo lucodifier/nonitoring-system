@@ -39,7 +39,7 @@ DB_DATABASE=monitoring_system
 
 # Docker (opcional - configuração global)
 # Opção 1: Docker remoto via TCP (se o Docker aceitar conexões remotas)
-DOCKER_HOST=10.10.10.223         # IP do servidor Docker remoto
+DOCKER_HOST=your-docker-host        # IP do servidor Docker remoto
 DOCKER_PORT=2375                 # Porta do Docker (2375 não-TLS, 2376 TLS)
 
 # Opção 2: Docker local via socket (se worker e containers estão no mesmo servidor)

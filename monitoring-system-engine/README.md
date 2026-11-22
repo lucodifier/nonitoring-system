@@ -82,9 +82,7 @@ A API utiliza JWT (JSON Web Tokens) para autenticação. Para acessar os endpoin
 
 ### Usuários padrão (após executar seed data):
 
-- **Username:** `admin` | **Password:** `admin123`
-- **Username:** `operator` | **Password:** `admin123`
-- **Username:** `viewer` | **Password:** `admin123`
+- Nenhum usuário é criado por padrão. Gere o admin com `pnpm ts-node scripts/create-admin-user.ts`, definindo `ADMIN_PASSWORD` no ambiente.
 
 ## 📡 Endpoints Principais
 

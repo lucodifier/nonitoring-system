@@ -1,6 +1,6 @@
 services:
   monitoring-system-dashboard:
-    image: ghcr.io/agroplay-music-ltda/monitoring-system-dashboard:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-org}/monitoring-system-dashboard:${IMAGE_TAG:-latest}
     container_name: monitoring-system-dashboard
     ports:
       - "5068:3000"

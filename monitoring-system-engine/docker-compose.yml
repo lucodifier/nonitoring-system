@@ -1,6 +1,6 @@
 services:
   monitoring-system-engine:
-    image: ghcr.io/agroplay-music-ltda/monitoring-system-engine:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-org}/monitoring-system-engine:${IMAGE_TAG:-latest}
     container_name: monitoring-system-engine
     ports:
       - "5070:3003"

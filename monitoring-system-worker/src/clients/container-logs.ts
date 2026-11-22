@@ -73,7 +73,7 @@ const SERILOG_NON_WARNING_TAG = '^\\[[^]]+ (INF|DBG|VRB)\\]';
  * Mesma ideia para os outros formatos que declaram o nível:
  *  - pino JSON: "level":10/20/30 (trace/debug/info) e 40 (warn). Ex.: o log de sucesso
  *    {"level":30,...,"failed":0,"msg":"syncImages: concluído — 2 atualizado(s), 0 erro(s)"}
- *    casava com "failed"/"erro" e virava "errors in logs (2 errors)" na paralogy-api.
+ *    casava com "failed"/"erro" e virava "errors in logs (2 errors)" na example-api.
  *    Só vale o nível do próprio registro: o pino grava "level" como primeiro campo, então a
  *    regra é ancorada no início da linha. Um "level" aninhado (ex.: {"level":50,...,
  *    "context":{"level":30}}) não descarta o erro.

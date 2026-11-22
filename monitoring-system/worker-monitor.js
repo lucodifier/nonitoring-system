@@ -44,23 +44,10 @@ const CHECK_INTERVAL_MS = envIntervalMs ?? 15 * 60 * 1000; // default 15m
 const PERIOD_LONG_LABEL = formatDurationLong(CHECK_INTERVAL_MS);
 const PERIOD_SHORT_LABEL = formatDurationShort(CHECK_INTERVAL_MS);
 
+// Lista de serviços vem da env SERVICES (separados por vírgula). Estes são apenas exemplos.
 const DEFAULT_SERVICES = [
-  'paralogy-distribution',
-  'paralogy-api',  
-  'royalties-worker',
-  'royalties-api',
-  'messaging-api',
-  'gs1-integration-worker',
-  'socinpro-integration',
-  'paralogy-distribution',
-  'connectmix-integration',
-  'audio-worker',
-  'auth-api',
-  'insights-api',
-  'messaging-worker',
-  'media-processor-worker',
-  'ranking-worker',   
-  'paralogy-orchestrator'
+  'example-api',
+  'example-worker'
 ];
 
 const envServices = process.env.SERVICES
@@ -288,7 +275,7 @@ class AlertManager {
 
     const metadata = {
       subject: `🚨 ${totalErrors} erros em ${errors.length} serviços (últimos ${this.config.periodShortLabel})`,
-      template: 'Monitoring Alerts - Paralogy',
+      template: `Monitoring Alerts - ${process.env.SYSTEM_NAME || 'Monitoring System'}`,
       totalErrors,
       affectedServices: errors.length,
       services: errors.map(e => ({
@@ -392,7 +379,7 @@ class AlertManager {
 export async function sendEmail(options) {
   try {
     const payload = {
-      system: 'Paralogy',
+      system: process.env.SYSTEM_NAME || 'Monitoring System',
       subjectCode: options.subjectCode,
       notificationType: options.notificationType || 'Email',
       recipients: options.recipients,

@@ -8,7 +8,7 @@
 #   */5 * * * * /opt/monitoring/monitor-agent.sh >> /var/log/monitor-agent.log 2>&1
 #
 # Configuração por ambiente (ou editando os defaults abaixo):
-#   MONITOR_URL    URL do endpoint  (ex: http://10.10.10.223:5080/monitor/heartbeat)
+#   MONITOR_URL    URL do endpoint  (ex: http://your-worker-host:5080/monitor/heartbeat)
 #   MONITOR_TOKEN  token do worker  (MONITOR_HEARTBEAT_TOKEN)
 #   MONITOR_HOSTNAME  sobrescreve o hostname (precisa bater com monitoring.vms.hostname)
 #

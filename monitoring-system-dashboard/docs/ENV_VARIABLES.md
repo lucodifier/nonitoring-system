@@ -16,7 +16,7 @@ Todas as variáveis devem usar o prefixo `VITE_` no `.env`:
 
 ```bash
 # API Configuration
-VITE_API_URL=http://10.10.10.223:5070/api/v1
+VITE_API_URL=http://your-engine-host:5070/api/v1
 
 # App Configuration  
 VITE_APP_TITLE=Monitoring System Dashboard

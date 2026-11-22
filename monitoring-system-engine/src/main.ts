@@ -66,7 +66,7 @@ async function bootstrap() {
     
     apiUrl = isLocal 
       ? `http://localhost:${port}`
-      : `http://10.10.10.223:${port}`;
+      : `http://localhost:${port}`;
   }
   
   await app.listen(port, host);

@@ -16,7 +16,7 @@
     Sobrescreve o hostname enviado. Precisa bater com monitoring.vms.hostname.
 
 .EXAMPLE
-    .\monitor-agent.ps1 -MonitorUrl "http://10.10.10.223:5080/monitor/heartbeat" -MonitorToken "..."
+    .\monitor-agent.ps1 -MonitorUrl "http://your-worker-host:5080/monitor/heartbeat" -MonitorToken "..."
 #>
 
 [CmdletBinding()]

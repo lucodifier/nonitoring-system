@@ -25,7 +25,7 @@ Login com usuário e senha.
 ```json
 {
   "username": "admin",
-  "password": "admin123"
+  "password": "<sua-senha>"
 }
 ```
 
@@ -83,8 +83,8 @@ Lista todos os serviços.
 ```json
 [
   {
-    "id": "paralogy-api",
-    "name": "Paralogy API",
+    "id": "example-api",
+    "name": "Example API",
     "type": "api",
     "env": "production",
     "importance": "critical",
@@ -104,14 +104,14 @@ Retorna detalhes de um serviço específico.
 **Response:**
 ```json
 {
-  "id": "paralogy-api",
-  "name": "Paralogy API",
-  "description": "API principal do sistema Paralogy",
+  "id": "example-api",
+  "name": "Example API",
+  "description": "API principal do sistema de exemplo",
   "type": "api",
   "env": "production",
-  "url": "https://api.paralogy.com",
-  "prometheusJob": "paralogy-api",
-  "lokiLabel": "app=\"paralogy-api\"",
+  "url": "https://api.example.com",
+  "prometheusJob": "example-api",
+  "lokiLabel": "app=\"example-api\"",
   "importance": "critical",
   "team": "backend",
   "currentStatus": {
@@ -130,7 +130,7 @@ Retorna o status atual de um serviço.
 **Response:**
 ```json
 {
-  "serviceId": "paralogy-api",
+  "serviceId": "example-api",
   "status": "UP",
   "cpuUsage": 45.2,
   "memoryUsage": 62.8,
@@ -156,7 +156,7 @@ Retorna o histórico de status de um serviço.
 [
   {
     "id": "12345",
-    "serviceId": "paralogy-api",
+    "serviceId": "example-api",
     "status": "UP",
     "cpuUsage": 45.2,
     "memoryUsage": 62.8,
@@ -177,7 +177,7 @@ Retorna os erros de um serviço.
 [
   {
     "id": "1",
-    "serviceId": "paralogy-api",
+    "serviceId": "example-api",
     "errorMessage": "Database connection timeout",
     "errorType": "DatabaseError",
     "errorLevel": "error",
@@ -200,7 +200,7 @@ Retorna os alertas de um serviço.
 [
   {
     "id": "1",
-    "serviceId": "paralogy-api",
+    "serviceId": "example-api",
     "alertType": "high_cpu",
     "severity": "warning",
     "title": "High CPU Usage",
@@ -234,7 +234,7 @@ Retorna um resumo consolidado para o dashboard principal.
   "latestErrors": [
     {
       "id": "1",
-      "serviceId": "paralogy-api",
+      "serviceId": "example-api",
       "errorMessage": "Database connection timeout",
       "occurredAt": "2025-11-30T08:15:00Z"
     }
@@ -251,7 +251,7 @@ Retorna métricas de CPU de um serviço.
 **Response:**
 ```json
 {
-  "serviceId": "paralogy-api",
+  "serviceId": "example-api",
   "metric": "cpu_usage",
   "unit": "percent",
   "data": [
@@ -285,7 +285,7 @@ Retorna a taxa de erros por minuto.
 **Response:**
 ```json
 {
-  "serviceId": "paralogy-api",
+  "serviceId": "example-api",
   "metric": "errors_per_minute",
   "unit": "count",
   "data": [
@@ -310,7 +310,7 @@ Retorna o percentual de uptime de um serviço.
 **Response:**
 ```json
 {
-  "serviceId": "paralogy-api",
+  "serviceId": "example-api",
   "hours": 24,
   "total": 288,
   "upCount": 285,
@@ -334,7 +334,7 @@ Lista todos os alertas.
 [
   {
     "id": "1",
-    "serviceId": "paralogy-api",
+    "serviceId": "example-api",
     "alertType": "high_cpu",
     "severity": "warning",
     "title": "High CPU Usage",
@@ -343,8 +343,8 @@ Lista todos os alertas.
     "acknowledged": false,
     "createdAt": "2025-11-30T09:00:00Z",
     "service": {
-      "id": "paralogy-api",
-      "name": "Paralogy API"
+      "id": "example-api",
+      "name": "Example API"
     }
   }
 ]
@@ -391,15 +391,15 @@ Retorna os últimos erros de todos os serviços.
 [
   {
     "id": "1",
-    "serviceId": "paralogy-api",
+    "serviceId": "example-api",
     "errorMessage": "Database connection timeout",
     "errorType": "DatabaseError",
     "errorLevel": "error",
     "lokiUrl": "https://grafana.local/explore?query=...",
     "occurredAt": "2025-11-30T08:15:00Z",
     "service": {
-      "id": "paralogy-api",
-      "name": "Paralogy API"
+      "id": "example-api",
+      "name": "Example API"
     }
   }
 ]
@@ -514,7 +514,7 @@ A maioria dos endpoints de listagem suporta:
 # Login
 curl -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
+  -d '{"username":"admin","password":"<sua-senha>"}'
 
 # Listar serviços (com token)
 curl -X GET http://localhost:3000/api/v1/services \

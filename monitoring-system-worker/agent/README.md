@@ -23,7 +23,7 @@ ninguém registrou não deve entrar no monitoramento por um POST.
 
 ```sql
 INSERT INTO monitoring.vms (hostname, ip, provider_id, name, enabled)
-VALUES ('app-prod-01', '10.10.10.50', '100', 'App Produção 01', true);
+VALUES ('app-prod-01', '10.0.0.50', '100', 'App Produção 01', true);
 ```
 
 - `hostname` **precisa ser exatamente** o que o agente envia (`hostname` no Linux,
@@ -41,7 +41,7 @@ sudo chmod +x /opt/monitoring/monitor-agent.sh
 
 # Token fora do script, com permissão restrita — o script não guarda segredo.
 sudo tee /etc/default/monitor-agent >/dev/null <<'EOF'
-MONITOR_URL=http://10.10.10.223:5080/monitor/heartbeat
+MONITOR_URL=http://your-worker-host:5080/monitor/heartbeat
 MONITOR_TOKEN=<mesmo valor de MONITOR_HEARTBEAT_TOKEN no worker>
 EOF
 sudo chmod 600 /etc/default/monitor-agent
@@ -75,7 +75,7 @@ New-Item -ItemType Directory -Force -Path 'C:\monitoring'
 Copy-Item .\monitor-agent.ps1 'C:\monitoring\'
 
 # Token como variável de máquina (não fica no script nem no comando da tarefa)
-[Environment]::SetEnvironmentVariable('MONITOR_URL',   'http://10.10.10.223:5080/monitor/heartbeat', 'Machine')
+[Environment]::SetEnvironmentVariable('MONITOR_URL',   'http://your-worker-host:5080/monitor/heartbeat', 'Machine')
 [Environment]::SetEnvironmentVariable('MONITOR_TOKEN', '<token do worker>', 'Machine')
 ```
 

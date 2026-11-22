@@ -1,6 +1,6 @@
 services:
   monitoring-system-worker:
-    image: ghcr.io/agroplay-music-ltda/monitoring-system-worker:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-org}/monitoring-system-worker:${IMAGE_TAG:-latest}
     container_name: monitoring-system-worker
     env_file:
       - .env

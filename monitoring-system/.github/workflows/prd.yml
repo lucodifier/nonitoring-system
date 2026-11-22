@@ -56,7 +56,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          SERVER_DIR="/home/desenvol_prod/Docker/monitoring-system"
+          SERVER_DIR="${{ vars.DEPLOY_BASE_DIR || '/opt/docker' }}/monitoring-system"
           mkdir -p "$SERVER_DIR"
           cd "$SERVER_DIR"
           echo "🔑 Baixando secrets do Infisical..."
@@ -66,7 +66,7 @@ jobs:
             --projectId="${{ secrets.INFISICAL_PROJECT_ID }}" \
             --path="/monitoring-system" \
             --format=dotenv \
-            --domain="http://10.10.10.223:6007/api" \
+            --domain="${{ vars.INFISICAL_DOMAIN }}" \
             > .env
           echo "✅ .env gerado em $SERVER_DIR/.env"
 
@@ -74,7 +74,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          SERVER_DIR="/home/desenvol_prod/Docker/monitoring-system"
+          SERVER_DIR="${{ vars.DEPLOY_BASE_DIR || '/opt/docker' }}/monitoring-system"
           cd "$SERVER_DIR"
           echo "🛑 Parando projeto atual (se existir)..."
           docker compose down --remove-orphans || true
@@ -92,7 +92,7 @@ jobs:
       - name: 🧹 Limpar .env após deploy
         shell: bash
         run: |
-          SERVER_DIR="/home/desenvol_prod/Docker/monitoring-system"
+          SERVER_DIR="${{ vars.DEPLOY_BASE_DIR || '/opt/docker' }}/monitoring-system"
           rm -f "$SERVER_DIR/.env"
           echo ".env apagado com sucesso"
 

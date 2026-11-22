@@ -90,8 +90,8 @@ export class DockerService {
         throw new BadRequestException(
           'Docker SSH configuration required. Please set DOCKER_SSH_HOST and DOCKER_SSH_USERNAME environment variables in your .env file. ' +
           'Example:\n' +
-          'DOCKER_SSH_HOST=10.10.10.223\n' +
-          'DOCKER_SSH_USERNAME=desenvol_prod\n' +
+          'DOCKER_SSH_HOST=your-docker-host\n' +
+          'DOCKER_SSH_USERNAME=your-user\n' +
           'DOCKER_SSH_PASSWORD=your_password'
         );
       }
