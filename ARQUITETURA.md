@@ -220,17 +220,3 @@ Os arquivos `.env.sample` de cada projeto são a referência completa e comentad
 
 Nomes diferentes para o mesmo banco: worker usa `DB_HOST/DB_USERNAME/...`; engine usa `DATABASE_HOST/DATABASE_USERNAME/...`.
 Os limiares de disco/heartbeat existem nos dois (`DISK_*`, `HEARTBEAT_MAX_AGE_MINUTES`) e **devem ter os mesmos valores**.
-
----
-
-## 5. Atenção ao transformar em portfólio
-
-Itens encontrados no código/config que **não devem ir para um repositório público como estão**:
-
-- **Segredos e infraestrutura interna:** IPs `10.10.10.223/224`, organização `agroplay-music-ltda` (imagens GHCR), domínio do Infisical (`http://10.10.10.223:6007/api`), caminho `/home/desenvol_prod/...`, nome de sistema `Paralogy` e a lista de serviços internos em `monitoring-system/worker-monitor.js`. Troque por placeholders.
-- **Credenciais padrão:** usuários `admin`/`operator`/`viewer` com senha `admin123` (README do engine e `create-admin-user.ts`).
-- **Histórico git:** `monitoring-system-worker` tem `.git` com histórico completo; use repositório novo (sem histórico) ou limpe antes de publicar. Verifique se nenhum commit antigo contém `.env`/senhas.
-- **Segurança a conhecer/documentar:** CORS aberto a qualquer origem nos dois servidores; heartbeat com token global por HTTP; `DOCKER_SSH_PASSWORD` em texto no `.env`.
-- **Schema base ausente** (ver 3.2) — sem ele ninguém consegue subir o projeto a partir do repositório.
-- **Resíduos:** `ManusDialog.tsx` e `Map.tsx` no dashboard (vindos de template), `ideas.md`, `docs/comofunciona.md` com diagrama defasado (fala em `*/15`, mas o código roda por `CRON_EXPRESSION`), duas listas duplicadas (`paralogy-distribution` aparece 2× em `DEFAULT_SERVICES`).
-- **Divergências de nome/porta:** `.env.example` do engine e do worker coexistem com os novos `.env.sample`; escolha um nome e remova o outro (não removi nada — ver abaixo).
