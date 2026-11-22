@@ -50,7 +50,7 @@ o resultado em cache; o restart refaz a detecção.
 
 ```sql
 INSERT INTO monitoring.vms (hostname, ip, provider_id, name, enabled)
-VALUES ('app-prod-01', '10.10.10.50', '100', 'App Produção 01', true);
+VALUES ('app-prod-01', '10.0.0.50', '100', 'App Produção 01', true);
 ```
 
 O casamento com o hypervisor é por `provider_id`; sem ele, o worker tenta pelo nome
@@ -99,7 +99,7 @@ Disco /var da VM App Produção 01 em estado crítico — projeção de encher e
 • Uso atual: 87.4% (437.0 GB de 500.0 GB)
 • Projeção: enche em ~31 horas
 • Crescimento: 48.20 GB/dia (168 amostras em 7d)
-• IP 10.10.10.50
+• IP 10.0.0.50
 • ID no hypervisor: 100
 
 *Serviço:* App Produção 01  |  *Tipo:* vm  |  *Ambiente:* production
