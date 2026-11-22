@@ -1,0 +1,14 @@
+services:
+  monitoring-system-engine:
+    image: ghcr.io/agroplay-music-ltda/monitoring-system-engine:latest
+    container_name: monitoring-system-engine
+    ports:
+      - "5070:3003"
+    env_file:
+      - .env
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    restart: unless-stopped

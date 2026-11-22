@@ -1,0 +1,16 @@
+services:
+  monitoring-system-worker:
+    image: ghcr.io/agroplay-music-ltda/monitoring-system-worker:latest
+    container_name: monitoring-system-worker
+    env_file:
+      - .env
+    # Endpoint de heartbeat: as VMs do parque postam aqui a cada 5 min.
+    # Restrinja esta porta à rede das VMs no firewall do host.
+    ports:
+      - "${HEARTBEAT_PORT:-5080}:${HEARTBEAT_PORT:-5080}"
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    restart: unless-stopped

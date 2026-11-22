@@ -1,0 +1,14 @@
+services:
+  monitoring-system-dashboard:
+    image: ghcr.io/agroplay-music-ltda/monitoring-system-dashboard:latest
+    container_name: monitoring-system-dashboard
+    ports:
+      - "5068:3000"
+    env_file:
+      - .env
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    restart: unless-stopped

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitoring System — Saúde de serviços e VMs em tempo real</title>
+<meta name="description" content="Plataforma de monitoramento de containers Docker e VMs: status UP/DOWN/DEGRADED, previsão de disco cheio, alertas no Discord e Google Chat e dashboard em tempo real.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23ea580c'/><path d='M12 54h20l9-24 14 44 10-28h23' fill='none' stroke='white' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --p50:#fff7ed;--p100:#ffedd5;--p200:#fed7aa;--p300:#fdba74;--p500:#f97316;--p600:#ea580c;--p700:#c2410c;
+    --ink:#111827;--mut:#4b5563;--line:#e5e7eb;--bg:#fff;--card:#fff;
+    --up:#16a34a;--warn:#d97706;--down:#dc2626;
+    --term:#0f172a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;line-height:1.55}
+  a{color:inherit;text-decoration:none}
+  code,pre,.mono{font-family:'Fira Code',Consolas,monospace}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  .grad{background:linear-gradient(90deg,var(--p600),#d97706);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* nav */
+  nav{position:fixed;inset:0 0 auto 0;z-index:50;background:rgba(255,255,255,.82);backdrop-filter:blur(12px);border-bottom:1px solid #f3f4f6}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px}
+  .logo{width:34px;height:34px;border-radius:10px;background:var(--p600);display:grid;place-items:center}
+  nav ul{display:flex;gap:28px;list-style:none;align-items:center}
+  nav ul a{font-weight:500;color:#374151;transition:color .2s}
+  nav ul a:hover{color:var(--p600)}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:700;border-radius:10px;padding:12px 22px;transition:all .25s;border:2px solid transparent}
+  .btn-p{background:var(--p600);color:#fff;box-shadow:0 8px 20px -6px rgba(234,88,12,.55)}
+  .btn-p:hover{background:var(--p700);transform:translateY(-2px)}
+  .btn-o{background:#fff;border-color:var(--p200);color:var(--p700)}
+  .btn-o:hover{border-color:var(--p500);transform:translateY(-2px)}
+  .btn-sm{padding:8px 18px;font-size:14px}
+
+  /* hero */
+  .hero{position:relative;overflow:hidden;padding:140px 0 90px;background:linear-gradient(135deg,var(--p50),#fff 45%,var(--p100))}
+  .blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.35;animation:pulse 5s ease-in-out infinite}
+  .b1{width:320px;height:320px;background:var(--p300);top:60px;right:-40px}
+  .b2{width:420px;height:420px;background:var(--p200);bottom:-120px;left:-80px;animation-delay:1.5s}
+  @keyframes pulse{50%{opacity:.18;transform:scale(1.08)}}
+  .hero .grid{position:relative;display:grid;grid-template-columns:1.05fr 1fr;gap:56px;align-items:center}
+  .pill{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--p200);color:var(--p700);font-weight:600;font-size:14px;padding:7px 16px;border-radius:99px;box-shadow:0 4px 12px rgba(0,0,0,.05);margin-bottom:22px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--up);box-shadow:0 0 0 0 rgba(22,163,74,.6);animation:ping 1.8s infinite}
+  @keyframes ping{70%{box-shadow:0 0 0 9px rgba(22,163,74,0)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
+  h1{font-size:clamp(36px,5.2vw,60px);line-height:1.08;font-weight:900;letter-spacing:-.025em}
+  h1 .u{position:relative;white-space:nowrap}
+  h1 .u svg{position:absolute;left:0;bottom:-8px;width:100%;height:12px}
+  .lead{font-size:19px;color:var(--mut);margin:22px 0 32px;max-width:540px}
+  .lead strong{color:var(--p700)}
+  .cta{display:flex;gap:14px;flex-wrap:wrap}
+  .stats{display:flex;gap:34px;margin-top:40px;flex-wrap:wrap}
+  .stats b{display:block;font-size:28px;font-weight:800;color:var(--p600)}
+  .stats span{font-size:13px;color:var(--mut)}
+
+  /* dashboard mock */
+  .mock{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 30px 60px -20px rgba(194,65,12,.35);overflow:hidden;transform:rotate(1.2deg);transition:transform .4s}
+  .mock:hover{transform:rotate(0)}
+  .mock-h{display:flex;align-items:center;gap:7px;padding:12px 16px;background:#f9fafb;border-bottom:1px solid var(--line)}
+  .mock-h i{width:11px;height:11px;border-radius:50%;display:block}
+  .mock-h span{margin-left:10px;font-size:12px;color:#9ca3af}
+  .rows{padding:8px 0}
+  .row{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:11px 18px;border-bottom:1px solid #f3f4f6;font-size:14px}
+  .row:last-child{border:0}
+  .row .n{font-weight:600}
+  .row .m{font-size:12px;color:#9ca3af}
+  .tag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;letter-spacing:.03em}
+  .t-up{background:#dcfce7;color:#166534}.t-warn{background:#fef3c7;color:#92400e}.t-down{background:#fee2e2;color:#991b1b}
+  .spark{width:70px;height:22px}
+  .disk{padding:14px 18px;background:var(--p50);border-top:1px solid var(--p100);font-size:13px;display:flex;justify-content:space-between;gap:10px}
+  .disk b{color:var(--p700)}
+
+  /* sections */
+  section{padding:96px 0}
+  .eyebrow{color:var(--p600);font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;text-align:center}
+  h2{font-size:clamp(28px,3.6vw,42px);font-weight:800;letter-spacing:-.02em;text-align:center;margin:10px auto 14px;max-width:760px;line-height:1.15}
+  .sub{text-align:center;color:var(--mut);max-width:620px;margin:0 auto 56px;font-size:18px}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px;transition:all .3s}
+  .card:hover{transform:translateY(-6px);box-shadow:0 20px 40px -18px rgba(234,88,12,.35);border-color:var(--p200)}
+  .ic{width:48px;height:48px;border-radius:13px;background:var(--p100);display:grid;place-items:center;font-size:23px;margin-bottom:18px}
+  .card h3{font-size:19px;font-weight:700;margin-bottom:8px}
+  .card p{color:var(--mut);font-size:15px}
+
+  /* architecture */
+  .alt{background:linear-gradient(180deg,#fff,var(--p50))}
+  .arch{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  .proj{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;position:relative}
+  .proj::after{content:"→";position:absolute;right:-17px;top:50%;transform:translateY(-50%);color:var(--p500);font-weight:800;font-size:18px;z-index:2}
+  .proj:last-child::after{display:none}
+  .proj .k{font-size:12px;color:var(--p600);font-weight:700;margin-bottom:6px}
+  .proj h3{font-size:16px;font-weight:700;margin-bottom:6px}
+  .proj p{font-size:14px;color:var(--mut);margin-bottom:12px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chips span{font-size:11px;background:var(--p50);color:var(--p700);border:1px solid var(--p100);padding:2px 9px;border-radius:99px;font-family:'Fira Code',monospace}
+  .db{margin:26px auto 0;max-width:520px;text-align:center;background:var(--term);color:#e2e8f0;border-radius:14px;padding:16px;font-size:14px}
+  .db b{color:var(--p300)}
+
+  /* terminal */
+  .term{background:var(--term);border-radius:18px;overflow:hidden;box-shadow:0 30px 60px -25px rgba(15,23,42,.6);max-width:860px;margin:0 auto}
+  .term .bar{display:flex;gap:7px;padding:13px 16px;background:#1e293b}
+  .term .bar i{width:11px;height:11px;border-radius:50%;display:block}
+  .term pre{padding:24px;color:#cbd5e1;font-size:14px;overflow-x:auto;line-height:1.75}
+  .c{color:#64748b}.g{color:#4ade80}.o{color:#fb923c}.y{color:#fbbf24}.r{color:#f87171}
+
+  /* alert */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+  .split h2,.split .eyebrow{text-align:left;margin-left:0}
+  .split ul{list-style:none;display:grid;gap:14px;margin-top:22px}
+  .split li{display:flex;gap:12px;color:var(--mut)}
+  .split li::before{content:"✓";flex:none;width:24px;height:24px;border-radius:50%;background:var(--p100);color:var(--p700);font-weight:800;font-size:13px;display:grid;place-items:center;margin-top:2px}
+  .chat{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 20px 40px -20px rgba(0,0,0,.2)}
+  .msg{display:flex;gap:12px;margin-bottom:16px}
+  .msg:last-child{margin:0}
+  .av{flex:none;width:38px;height:38px;border-radius:50%;background:var(--p600);display:grid;place-items:center;color:#fff;font-weight:800}
+  .bub{background:#f9fafb;border-left:4px solid var(--down);border-radius:10px;padding:10px 14px;font-size:14px;flex:1}
+  .bub.w{border-color:var(--warn)}.bub.u{border-color:var(--up)}
+  .bub b{display:block;font-size:13px;margin-bottom:2px}
+  .bub small{color:#9ca3af}
+
+  /* cta */
+  .final{background:linear-gradient(135deg,var(--p600),#b45309);color:#fff;border-radius:26px;padding:64px 32px;text-align:center;position:relative;overflow:hidden}
+  .final h2{color:#fff}
+  .final p{color:#ffedd5;max-width:560px;margin:0 auto 30px;font-size:18px}
+  .final .btn-w{background:#fff;color:var(--p700)}
+  .final .btn-w:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(0,0,0,.25)}
+  .final .btn-g{border-color:rgba(255,255,255,.5);color:#fff}
+  footer{padding:36px 0 48px;text-align:center;color:#9ca3af;font-size:14px}
+
+  .rv{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}
+  .rv.in{opacity:1;transform:none}
+
+  @media(max-width:960px){
+    .hero .grid,.split{grid-template-columns:1fr}
+    .cards{grid-template-columns:1fr 1fr}
+    .arch{grid-template-columns:1fr 1fr}
+    .proj::after{display:none}
+    nav ul li:not(:last-child){display:none}
+    .mock{transform:none}
+  }
+  @media(max-width:600px){
+    .cards,.arch{grid-template-columns:1fr}
+    section{padding:70px 0}
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="#" class="brand">
+      <span class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h5l3-8 4 16 3-8h5"/></svg></span>
+      <span class="grad">Monitoring System</span>
+    </a>
+    <ul>
+      <li><a href="#features">Recursos</a></li>
+      <li><a href="#arch">Arquitetura</a></li>
+      <li><a href="#alerts">Alertas</a></li>
+      <li><a href="https://github.com/lucodifier/nonitoring-system" target="_blank" rel="noopener" class="btn btn-p btn-sm">GitHub</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="blob b1"></div><div class="blob b2"></div>
+  <div class="wrap grid">
+    <div>
+      <div class="pill"><span class="dot"></span> Monitorando serviços e VMs em tempo real</div>
+      <h1>Saiba que o servidor vai cair <span class="u grad">antes<svg viewBox="0 0 200 12" fill="none" preserveAspectRatio="none"><path d="M2 8C40 4 80 2 120 4C160 6 180 8 198 6" stroke="#f0741b" stroke-width="4" stroke-linecap="round"/></svg></span> do usuário.</h1>
+      <p class="lead">Plataforma de monitoramento de <strong>containers Docker</strong> e <strong>VMs</strong>: coleta saúde, logs e métricas, prevê disco cheio e alerta no <strong>Discord</strong> e <strong>Google Chat</strong>.</p>
+      <div class="cta">
+        <a href="https://github.com/lucodifier/nonitoring-system" target="_blank" rel="noopener" class="btn btn-p">Ver no GitHub →</a>
+        <a href="#arch" class="btn btn-o">Como funciona</a>
+      </div>
+      <div class="stats">
+        <div><b>3</b><span>estados: UP · DEGRADED · DOWN</span></div>
+        <div><b>2 min</b><span>ciclo de checagem das VMs</span></div>
+        <div><b>WS</b><span>dashboard ao vivo</span></div>
+      </div>
+    </div>
+
+    <div class="mock" aria-label="Prévia do dashboard">
+      <div class="mock-h"><i style="background:#f87171"></i><i style="background:#fbbf24"></i><i style="background:#4ade80"></i><span>dashboard · tempo real</span></div>
+      <div class="rows">
+        <div class="row"><div><div class="n">api-gateway</div><div class="m">container · host-01</div></div>
+          <svg class="spark" viewBox="0 0 70 22"><polyline fill="none" stroke="#16a34a" stroke-width="2" points="0,14 10,11 20,15 30,9 40,12 50,8 60,11 70,7"/></svg><span class="tag t-up">UP</span></div>
+        <div class="row"><div><div class="n">worker-queue</div><div class="m">container · host-01</div></div>
+          <svg class="spark" viewBox="0 0 70 22"><polyline fill="none" stroke="#d97706" stroke-width="2" points="0,6 10,8 20,7 30,12 40,11 50,16 60,15 70,18"/></svg><span class="tag t-warn">DEGRADED</span></div>
+        <div class="row"><div><div class="n">vm-banco-02</div><div class="m">VM · heartbeat há 6 min</div></div>
+          <svg class="spark" viewBox="0 0 70 22"><polyline fill="none" stroke="#dc2626" stroke-width="2" points="0,8 10,9 20,8 30,10 40,9 50,20 60,20 70,20"/></svg><span class="tag t-down">DOWN</span></div>
+        <div class="row"><div><div class="n">auth-service</div><div class="m">container · host-02</div></div>
+          <svg class="spark" viewBox="0 0 70 22"><polyline fill="none" stroke="#16a34a" stroke-width="2" points="0,12 10,10 20,13 30,11 40,10 50,12 60,9 70,10"/></svg><span class="tag t-up">UP</span></div>
+      </div>
+      <div class="disk"><span>💾 <b>vm-app-01</b> · disco em 78%</span><span>cheio em <b>~4 dias</b></span></div>
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <div class="eyebrow rv">Recursos</div>
+    <h2 class="rv">Tudo que você precisa para dormir tranquilo</h2>
+    <p class="sub rv">Menos ruído, mais sinal: alertas só quando importam, com contexto suficiente para agir.</p>
+    <div class="cards">
+      <div class="card rv"><div class="ic">🚦</div><h3>Status confiável</h3><p>UP, DOWN ou DEGRADED por serviço — e sem falso positivo quando o próprio Docker está inalcançável.</p></div>
+      <div class="card rv"><div class="ic">📈</div><h3>Previsão de disco cheio</h3><p>Regressão linear sobre o histórico estima quando o disco enche, com alerta amarelo e vermelho.</p></div>
+      <div class="card rv"><div class="ic">🖥️</div><h3>VMs sob vigilância</h3><p>Detecta VM parada, inacessível ou sem heartbeat, com agentes em bash e PowerShell.</p></div>
+      <div class="card rv"><div class="ic">⚡</div><h3>Tempo real</h3><p>Atualização por WebSocket: o dashboard muda no instante em que o estado muda.</p></div>
+      <div class="card rv"><div class="ic">🔕</div><h3>Anti-spam</h3><p>Cooldown de alertas persistido no banco — reinício do worker não repete notificações.</p></div>
+      <div class="card rv"><div class="ic">🧩</div><h3>Config em runtime</h3><p>O front lê a configuração ao subir, sem rebuild. Mesma imagem em qualquer ambiente.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="arch" class="alt">
+  <div class="wrap">
+    <div class="eyebrow rv">Arquitetura</div>
+    <h2 class="rv">Quatro peças, um banco, zero acoplamento</h2>
+    <p class="sub rv">O worker produz dados, o engine expõe, o dashboard exibe. Eles não se chamam por HTTP — conversam pelo PostgreSQL.</p>
+    <div class="arch">
+      <div class="proj rv"><div class="k">01 · COLETOR</div><h3>worker</h3><p>Crons de serviços e VMs, endpoint de heartbeat, alertas e previsão.</p><div class="chips"><span>Node 20</span><span>TypeScript</span><span>TypeORM</span></div></div>
+      <div class="proj rv"><div class="k">02 · API</div><h3>engine</h3><p>REST e WebSocket com JWT e Swagger, lendo o mesmo schema.</p><div class="chips"><span>NestJS</span><span>JWT</span><span>Swagger</span></div></div>
+      <div class="proj rv"><div class="k">03 · INTERFACE</div><h3>dashboard</h3><p>Visão ao vivo de serviços, VMs, logs e métricas.</p><div class="chips"><span>React</span><span>Vite</span><span>shadcn/ui</span></div></div>
+      <div class="proj rv"><div class="k">04 · LOGS</div><h3>log alerter</h3><p>Alertador standalone de erros via Loki, em um único arquivo.</p><div class="chips"><span>Node ESM</span><span>Loki</span></div></div>
+    </div>
+    <div class="db rv mono">🐘 PostgreSQL · schema <b>monitoring</b> — compartilhado por worker e engine</div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow rv">Na prática</div>
+    <h2 class="rv">Um ciclo de monitoramento, do início ao alerta</h2>
+    <p class="sub rv">Logs do worker durante uma checagem em que algo foge do normal.</p>
+    <div class="term rv">
+      <div class="bar"><i style="background:#f87171"></i><i style="background:#fbbf24"></i><i style="background:#4ade80"></i></div>
+<pre><span class="c"># monitoring-system-worker</span>
+<span class="g">✔</span> db conectado · schema monitoring
+<span class="g">✔</span> ciclo de serviços iniciado <span class="c">(a cada 15m)</span>
+<span class="g">UP</span>        api-gateway        <span class="c">42ms</span>
+<span class="g">UP</span>        auth-service       <span class="c">38ms</span>
+<span class="y">DEGRADED</span>  worker-queue       <span class="c">fila acima do limite</span>
+<span class="r">DOWN</span>      vm-banco-02        <span class="c">sem heartbeat há 6 min</span>
+<span class="o">⚠</span> vm-app-01 disco em 78% → previsão de cheio em <span class="o">~4 dias</span>
+<span class="o">➜</span> alertas enviados: <span class="o">Discord</span>, <span class="o">Google Chat</span> <span class="c">(cooldown 30m)</span></pre>
+    </div>
+  </div>
+</section>
+
+<section id="alerts" class="alt">
+  <div class="wrap split">
+    <div>
+      <div class="eyebrow rv">Alertas</div>
+      <h2 class="rv">O aviso chega no chat da equipe, não depois do cliente reclamar</h2>
+      <ul class="rv">
+        <li>Notificações no <b>Discord</b> e no <b>Google Chat</b>.</li>
+        <li>Cores por severidade: verde, amarelo e vermelho.</li>
+        <li>Cooldown evita enxurrada de mensagens repetidas.</li>
+        <li>Alertador de logs detecta erros via <b>Loki</b> automaticamente.</li>
+      </ul>
+    </div>
+    <div class="chat rv">
+      <div class="msg"><div class="av">M</div><div class="bub"><b>🔴 vm-banco-02 está DOWN</b>Sem heartbeat há 6 minutos. <br><small>agora há pouco</small></div></div>
+      <div class="msg"><div class="av">M</div><div class="bub w"><b>🟡 vm-app-01 — disco em 78%</b>Previsão: disco cheio em ~4 dias. <br><small>há 12 min</small></div></div>
+      <div class="msg"><div class="av">M</div><div class="bub u"><b>🟢 worker-queue recuperado</b>Voltou para UP após 9 minutos. <br><small>há 41 min</small></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="final rv">
+      <h2>Pronto para enxergar seu parque de servidores?</h2>
+      <p>Cada projeto traz um <code>.env.sample</code> comentado, e a documentação cobre o provisionamento passo a passo.</p>
+      <div class="cta" style="justify-content:center">
+        <a class="btn btn-w" href="https://github.com/lucodifier/nonitoring-system" target="_blank" rel="noopener">Abrir repositório →</a>
+        <a class="btn btn-g" href="https://github.com/lucodifier/nonitoring-system/blob/main/ARQUITETURA.md" target="_blank" rel="noopener">Ler a arquitetura</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>Monitoring System · feito por <a href="https://github.com/lucodifier" target="_blank" rel="noopener" style="color:var(--p600);font-weight:600">lucodifier</a></footer>
+
+<script>
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12 });
+  document.querySelectorAll('.rv').forEach((el, i) => { el.style.transitionDelay = (i % 3) * 80 + 'ms'; io.observe(el); });
+</script>
+</body>
+</html>

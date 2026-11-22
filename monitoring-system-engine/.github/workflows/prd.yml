@@ -1,0 +1,90 @@
+name: 🚀 Deploy to Server 🖥️ - Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-upload:
+    name: 🐳 Build and Upload Docker
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: 🔑 Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏗️ Build Docker Image
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}:latest .
+
+      - name: 🚀 Push Docker Image
+        run: |
+          docker push ghcr.io/${{ github.repository }}:latest
+
+  deploy:
+    name: 🖥️ Deploy to Server
+    runs-on: [self-hosted, prod]
+    needs: build-upload
+
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+
+      - name: 🔐 Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔑 Baixar secrets do Infisical
+        run: |
+          cd /home/desenvol_prod/Docker/monitoring-system-engine
+
+          echo "🔑 Baixando secrets do Infisical..."
+          infisical export \
+          --token ${{ secrets.INFISICAL_TOKEN }} \
+          --env=prod \
+          --projectId=21038c74-0248-4006-b23e-f94508aaef6a \
+          --path="/monitoring-system-engine" \
+          --format=dotenv \
+          --domain=http://10.10.10.223:6007/api \
+          > .env
+
+      - name: 🛥️ Deploy Docker container
+        run: |
+          cd /home/desenvol_prod/Docker/monitoring-system-engine
+
+          echo "🛑 Parando container atual (se existir)..."
+          docker compose down || true
+
+          echo "⬇️ Atualizando imagem..."
+          docker compose pull
+
+          echo "🚀 Subindo container atualizado..."
+          docker compose up -d
+
+      - name: 🧹 Limpar imagens antigas
+        run: docker image prune -f
+
+      - name: 🧹 Limpar .env após deploy
+        run: |
+          rm -f /home/desenvol_prod/Docker/monitoring-system-engine/.env
+          echo ".env apagado com sucesso"
